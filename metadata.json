@@ -1,0 +1,6 @@
+{
+  "name": "RoadGuard AI — Offline Road-Awareness System",
+  "description": "Offline-first AI driver-awareness and hazard advisory system for Raspberry Pi 5. Optimized for Colorado mountain road trips in a 2024 Toyota RAV4.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

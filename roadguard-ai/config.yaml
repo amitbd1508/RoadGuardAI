@@ -1,0 +1,178 @@
+# RoadGuard AI Configuration
+# Optimized for Raspberry Pi 5 + 2024 Toyota RAV4 XSE in Colorado Mountain Driving
+
+system:
+  device_name: "roadguard-pi5"
+  profile: "colorado_mountain"
+  log_level: "INFO"
+  log_file: "logs/roadguard.log"
+  temperature_throttle_celsius: 78.0
+  low_memory_threshold_mb: 400
+
+camera:
+  source_type: "picam3" # Options: 'picam3', 'usb', 'video'
+  device_index: 0
+  video_file: ""
+  width: 1280
+  height: 720
+  fps: 30
+  auto_reconnect: true
+  reconnect_delay_seconds: 2.0
+  rotation: 0
+
+calibration:
+  # Windshield mount specs for 2024 Toyota RAV4 XSE
+  camera_height_meters: 1.35
+  camera_pitch_degrees: -2.5
+  horizontal_fov_degrees: 75.0
+  vertical_fov_degrees: 45.0
+  focal_length_px: 960.0
+
+inference:
+  mode: "performance" # Options: 'performance' (YOLOv8n-int8), 'accuracy' (YOLOv8s-fp16)
+  provider: "CPUExecutionProvider" # ONNX Runtime CPU with ARM NEON acceleration
+  num_threads: 4
+  detection_fps: 10
+  lane_fps: 5
+  depth_fps: 4
+
+models:
+  detection_model_path: "models/yolov8n_roadguard.onnx"
+  segmentation_model_path: "models/yolov8n_seg_road.onnx"
+  depth_model_path: "models/fastdepth_lightweight.onnx"
+  traffic_sign_model_path: "models/traffic_sign_classifier.onnx"
+  ocr_model_path: "models/ocr_speed_digits.onnx"
+
+detection:
+  confidence_threshold: 0.55
+  iou_threshold: 0.45
+  classes_to_track:
+    - "car"
+    - "suv"
+    - "truck"
+    - "bus"
+    - "motorcycle"
+    - "bicycle"
+    - "pedestrian"
+    - "deer"
+    - "elk"
+    - "moose"
+    - "bear"
+    - "dog"
+    - "cattle"
+    - "pothole"
+    - "speed_bump"
+    - "debris"
+    - "rock"
+    - "cone"
+    - "barrier"
+    - "traffic_sign"
+
+tracking:
+  tracker_type: "bytetrack"
+  track_thresh: 0.50
+  track_buffer: 30
+  match_thresh: 0.70
+
+speed_limit:
+  enabled: true
+  confirmation_frames: 3
+  speed_unit: "MPH" # MPH or KMH
+  alert_speed_delta_mph: 6 # Warn if vehicle GPS speed > speed limit + 6mph
+  cooldown_seconds: 15.0
+
+traffic_signs:
+  enabled: true
+  confirmation_frames: 2
+  confidence_threshold: 0.60
+  mountain_warning_distance_meters: 80.0
+
+road_hazards:
+  enabled: true
+  pothole_min_confidence: 0.60
+  debris_min_confidence: 0.55
+  confirmation_frames: 2
+  max_warning_distance_meters: 65.0
+
+wildlife:
+  enabled: true
+  confidence_threshold: 0.55
+  roadside_zone_lateral_ratio: 0.35 # Side margins of camera frame
+  critical_distance_meters: 50.0
+
+distance:
+  enabled: true
+  method: "perspective_geometry" # 'perspective_geometry' or 'monocular_depth'
+
+gps:
+  enabled: true
+  port: "auto" # 'auto' scans /dev/ttyACM* and /dev/ttyUSB*
+  baudrate: 9600
+  timeout_seconds: 1.0
+
+offline_maps:
+  enabled: true
+  region: "colorado"
+  osm_data_path: "data/maps/colorado_roads.geojson"
+  elevation_data_path: "data/maps/colorado_elevation.sqlite"
+
+alerts:
+  enabled: true
+  default_cooldown_seconds: 6.0
+  critical_cooldown_seconds: 2.5
+  minimum_confidence: 0.58
+  priorities:
+    CRITICAL: 1
+    HIGH: 2
+    MEDIUM: 3
+    LOW: 4
+
+audio:
+  enabled: true
+  engine: "piper" # 'piper' or fallback 'espeak'
+  piper_voice: "en_US-lessac-medium"
+  volume: 0.85
+  rate: 1.05
+  audio_output_device: "default" # USB / Bluetooth audio sink
+
+dashboard:
+  enabled: true
+  host: "0.0.0.0"
+  port: 8080
+  stream_quality: 75
+  stream_width: 640
+  stream_height: 360
+  ws_ping_interval: 10
+
+storage:
+  database_path: "data/roadguard_events.db"
+  max_db_size_mb: 500
+  save_snapshots: false
+  snapshot_dir: "data/snapshots"
+
+recording:
+  enabled: false
+  dashcam_dir: "data/dashcam"
+  segment_duration_minutes: 5
+  max_storage_gb: 25.0
+  codec: "h264"
+  bitrate_kbps: 4000
+
+event_recording:
+  enabled: false
+  pre_event_seconds: 10
+  post_event_seconds: 10
+  save_dir: "data/events"
+
+license_plate:
+  enabled: false # Privacy-first default: disabled
+  display_live: false
+  save_plate_text: false
+  save_plate_images: false
+
+privacy:
+  cloud_upload: false
+  facial_recognition: false
+  driver_monitoring: false
+  telemetry_reporting: false
+  blur_faces: false

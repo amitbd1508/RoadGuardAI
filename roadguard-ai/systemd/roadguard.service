@@ -1,0 +1,32 @@
+[Unit]
+Description=RoadGuard AI - Embedded Road-Awareness System (Raspberry Pi 5)
+Documentation=https://github.com/roadguard/roadguard-ai
+After=network.target sound.target time-sync.target
+Wants=sound.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/roadguard-ai
+Environment="PYTHONUNBUFFERED=1"
+Environment="PATH=/home/pi/roadguard-ai/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/home/pi/roadguard-ai/.venv/bin/python -m roadguard.main --config /home/pi/roadguard-ai/config.yaml
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=5
+KillMode=mixed
+TimeoutStopSec=10
+Nice=-10
+
+# Hardware & Memory Protection
+MemoryMax=3G
+MemoryHigh=2.5G
+CPUQuota=350%
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=roadguard
+
+[Install]
+WantedBy=multi-user.target

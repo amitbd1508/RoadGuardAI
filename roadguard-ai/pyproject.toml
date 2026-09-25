@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "roadguard-ai"
+version = "1.0.0"
+description = "Offline-first AI road-awareness system for Raspberry Pi 5"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [{ name = "RoadGuard AI Team" }]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "opencv-python-headless>=4.8.0",
+    "onnxruntime>=1.16.0",
+    "numpy>=1.24.0,<2.0.0",
+    "pillow>=10.0.0",
+    "pyserial>=3.5",
+    "pynmea2>=1.19.0",
+    "psutil>=5.9.5",
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "websockets>=12.0",
+    "pydantic>=2.5.0",
+    "pyyaml>=6.0.1",
+    "rich>=13.7.0",
+]
+
+[project.scripts]
+roadguard = "roadguard.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["roadguard*"]
