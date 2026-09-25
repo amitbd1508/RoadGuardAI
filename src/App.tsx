@@ -22,6 +22,7 @@ import { DiagnosticsRunner } from './components/DiagnosticsRunner';
 import { CalibrationTool } from './components/CalibrationTool';
 import { Rav4InstallGuide } from './components/Rav4InstallGuide';
 import { CodebaseExplorer } from './components/CodebaseExplorer';
+import { ResearchPaperViewer } from './components/ResearchPaperViewer';
 
 const INITIAL_TELEMETRY: TelemetryData = {
   speed_mph: 48.0,
@@ -219,6 +220,14 @@ export default function App() {
           >
             Python Modules
           </button>
+          <button
+            onClick={() => setActiveTab('paper')}
+            className={`transition-colors hover:text-white pb-0.5 ${
+              activeTab === 'paper' ? 'text-sky-400 border-b-2 border-sky-400 font-semibold' : ''
+            }`}
+          >
+            Research Paper
+          </button>
         </nav>
 
         {/* Zone 3: Primary Actions */}
@@ -242,6 +251,7 @@ export default function App() {
           { id: 'calibration', label: 'Calibration' },
           { id: 'cabin', label: 'RAV4 Guide' },
           { id: 'codebase', label: 'Codebase' },
+          { id: 'paper', label: 'Paper (Ghosh)' },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -329,6 +339,9 @@ export default function App() {
 
         {/* Tab 6: Complete Python Codebase Explorer */}
         {activeTab === 'codebase' && <CodebaseExplorer />}
+
+        {/* Tab 7: Conference-Ready Research Paper */}
+        {activeTab === 'paper' && <ResearchPaperViewer />}
       </main>
 
       {/* Quiet Footer */}
