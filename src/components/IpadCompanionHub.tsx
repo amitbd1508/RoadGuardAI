@@ -23,6 +23,7 @@ import {
   TrendingDown
 } from 'lucide-react';
 import { TelemetryData, AlertEvent } from '../types';
+import { MountainMiniMap } from './MountainMiniMap';
 
 interface IpadCompanionHubProps {
   telemetry: TelemetryData;
@@ -40,7 +41,7 @@ export const IpadCompanionHub: React.FC<IpadCompanionHubProps> = ({
   const [audioVoiceEnabled, setAudioVoiceEnabled] = useState<boolean>(true);
   const [packetCount, setPacketCount] = useState<number>(0);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const [activeCodeTab, setActiveCodeTab] = useState<'sensor' | 'connection' | 'capacitor' | 'pwa'>('sensor');
+  const [activeCodeTab, setActiveCodeTab] = useState<'sensor' | 'connection' | 'leaflet' | 'capacitor' | 'pwa'>('sensor');
 
   // Simulated or Real iPad Sensors State
   const [ipadGps, setIpadGps] = useState({
@@ -348,8 +349,19 @@ export const IpadCompanionHub: React.FC<IpadCompanionHubProps> = ({
           </div>
         </div>
 
-        {/* Right 4 Cols: Offloaded Sensor Instruments */}
+        {/* Right 4 Cols: Offloaded Sensor Instruments & Topo Mini-Map */}
         <div className="lg:col-span-4 space-y-4">
+          {/* Topographical Mountain Pass Mini-Map (Leaflet.js) */}
+          <MountainMiniMap
+            latitude={ipadGps.lat}
+            longitude={ipadGps.lng}
+            heading={ipadGps.heading}
+            speedMph={ipadGps.speed_mph}
+            altitudeFt={ipadGps.alt_ft}
+            passName={telemetry.pass_name}
+            gradePct={telemetry.grade_pct}
+          />
+
           {/* Artificial Horizon / Inclinometer */}
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
             <div className="flex items-center justify-between text-xs font-mono text-slate-400 mb-3">
@@ -477,6 +489,14 @@ export const IpadCompanionHub: React.FC<IpadCompanionHubProps> = ({
               connectionService.ts
             </button>
             <button
+              onClick={() => setActiveCodeTab('leaflet')}
+              className={`px-3 py-1.5 rounded transition-colors ${
+                activeCodeTab === 'leaflet' ? 'bg-sky-600 text-white font-bold' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              MountainMiniMap.tsx (Leaflet)
+            </button>
+            <button
               onClick={() => setActiveCodeTab('capacitor')}
               className={`px-3 py-1.5 rounded transition-colors ${
                 activeCodeTab === 'capacitor' ? 'bg-sky-600 text-white font-bold' : 'text-slate-400 hover:text-white'
@@ -569,6 +589,34 @@ ws.onmessage = (event) => {
     audioAlertService.announce(telemetry.active_alerts[0]);
   }
 };`}
+              </pre>
+            </div>
+          )}
+
+          {activeCodeTab === 'leaflet' && (
+            <div>
+              <div className="flex justify-between items-center mb-2 text-slate-400">
+                <span>/src/components/MountainMiniMap.tsx (Leaflet.js Offline Topography)</span>
+              </div>
+              <pre className="text-emerald-300 leading-relaxed">
+{`// Leaflet.js Topographical Mini-Map for Colorado Mountain Passes
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Free OpenTopoMap tile layer with fallback to local offline vector contours
+const tileLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+  maxZoom: 17,
+  errorTileUrl: 'data:image/svg+xml;utf8,...' // Graceful fallback when cellular is 0 bars
+}).addTo(map);
+
+// Plot Mountain Pass Waypoints with Crest Elevation
+L.polyline(activePass.waypoints.map(w => [w[0], w[1]]), {
+  color: '#38bdf8', weight: 4, opacity: 0.8
+}).addTo(map);
+
+// Vehicle Location & Heading Marker (RAV4 XSE arrow rotating in real time)
+const marker = L.marker([latitude, longitude], { icon: vehicleIcon }).addTo(map);
+marker.setLatLng([latitude, longitude]);`}
               </pre>
             </div>
           )}

@@ -19,6 +19,7 @@ import { IpadSensorPayload, PiTelemetry, TelemetryAlert } from './types';
 import { sensorService } from './services/sensorService';
 import { connectionService } from './services/connectionService';
 import { audioAlertService } from './services/audioAlertService';
+import { MountainMiniMap } from './components/MountainMiniMap';
 
 export const App: React.FC = () => {
   const [connected, setConnected] = useState<boolean>(false);
@@ -222,6 +223,15 @@ export const App: React.FC = () => {
             <Activity size={15} />
             <span>iPad Sensor Stream & Offload</span>
           </div>
+
+          {/* Topographical Mountain Pass Mini-Map (Leaflet.js) */}
+          <MountainMiniMap
+            latitude={sensors.gps.latitude}
+            longitude={sensors.gps.longitude}
+            heading={sensors.gps.heading_deg || 245}
+            speedMph={sensors.gps.speed_mph || telemetry.speed_mph}
+            altitudeFt={sensors.gps.altitude_ft || 11990}
+          />
 
           {/* Artificial Horizon / Vehicle Pitch & Roll (Mountain Pass Grade) */}
           <div className="bg-slate-950 border border-slate-800 rounded-xl p-4">
