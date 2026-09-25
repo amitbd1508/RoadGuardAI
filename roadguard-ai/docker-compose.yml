@@ -1,0 +1,83 @@
+# ==============================================================================
+# RoadGuard AI — Docker Compose Specification
+# Optimized for Raspberry Pi 5 (ARM64) running Raspberry Pi OS 64-bit
+# Target: 2024 Toyota RAV4 XSE Dashcam ADAS Appliance
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # Primary In-Vehicle ADAS Appliance (Hardware Passthrough)
+  # Run with: docker compose up -d
+  # ----------------------------------------------------------------------------
+  roadguard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: roadguard-ai:latest
+    container_name: roadguard-ai
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    ipc: host
+    shm_size: "1gb"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - ROADGUARD_CONFIG=/app/config.yaml
+      - COLORADO_MODE=true
+      - AUDIO_ENABLED=true
+      - LOG_LEVEL=INFO
+      - RPI5_HARDWARE_ACCELERATION=true
+    volumes:
+      # Persistent configuration & data storage
+      - ./config.yaml:/app/config.yaml:ro
+      - ./data:/app/data
+      - ./logs:/app/logs
+      # Host timezone synchronization
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      # Dynamic device nodes
+      - /dev:/dev
+    devices:
+      # Forward-facing USB or CSI camera
+      - /dev/video0:/dev/video0
+      # USB-C / AUX Bluetooth ALSA audio sound card
+      - /dev/snd:/dev/snd
+    group_add:
+      - video
+      - audio
+      - dialout
+    ports:
+      # Local In-Vehicle HUD & Telemetry Dashboard
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/api/telemetry || exit 1"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  # ----------------------------------------------------------------------------
+  # Bench-Test / Synthetic Demo Profile (Zero Physical Hardware Required)
+  # Run with: docker compose --profile demo up
+  # ----------------------------------------------------------------------------
+  roadguard-demo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: roadguard-ai:latest
+    container_name: roadguard-ai-demo
+    profiles: ["demo"]
+    restart: "no"
+    shm_size: "512mb"
+    ports:
+      - "8080:8080"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - ROADGUARD_CONFIG=/app/config.yaml
+      - ROADGUARD_DEMO=true
+      - COLORADO_MODE=true
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./data:/app/data
+      - ./logs:/app/logs
+    command: ["python3", "-m", "roadguard.cli", "demo", "--scenario", "colorado_pass"]

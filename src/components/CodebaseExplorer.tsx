@@ -85,6 +85,54 @@ calibration:
   camera_height_meters: 1.35
   camera_pitch_degrees: -2.5
   horizontal_fov_degrees: 75.0`
+  },
+  {
+    path: 'docker-compose.yml',
+    category: 'Docker',
+    description: 'Production Docker Compose specification with camera, GPS, and ALSA audio pass-through for Raspberry Pi 5.',
+    language: 'yaml',
+    snippet: `services:
+  roadguard:
+    build: .
+    container_name: roadguard-ai
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    shm_size: "1gb"
+    devices:
+      - /dev/video0:/dev/video0
+      - /dev/snd:/dev/snd
+    group_add:
+      - video
+      - audio
+      - dialout
+    ports:
+      - "8080:8080"`
+  },
+  {
+    path: 'Dockerfile',
+    category: 'Docker',
+    description: 'Multi-stage ARM64 Dockerfile packaging ONNX Runtime, OpenCV, and Piper offline neural TTS.',
+    language: 'dockerfile',
+    snippet: `FROM debian:bookworm-slim AS base
+WORKDIR /app
+RUN apt-get update && apt-get install -y python3 python3-pip libcamera-dev alsa-utils
+COPY requirements.txt ./
+RUN pip install -r requirements.txt
+COPY roadguard ./roadguard
+COPY docker-entrypoint.sh /usr/local/bin/
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["python3", "-m", "roadguard.main"]`
+  },
+  {
+    path: 'docker-run.sh',
+    category: 'Docker',
+    description: 'Single-command auto-detecting hardware launcher for Raspberry Pi 5.',
+    language: 'bash',
+    snippet: `#!/usr/bin/env bash
+# Auto-detects /dev/video0, /dev/ttyUSB0, /dev/snd and launches RoadGuard AI
+./docker-run.sh        # Live vehicle mode
+./docker-run.sh --demo # Bench-top Colorado simulator`
   }
 ];
 

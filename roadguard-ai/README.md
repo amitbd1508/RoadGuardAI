@@ -197,6 +197,11 @@ roadguard-ai/
 │   ├── speaker_test.py                 # TTS synthesis test
 │   └── download_models.sh              # Checkpoint download script
 │
+├── Dockerfile                          # Multi-stage ARM64 container definition
+├── docker-compose.yml                  # Hardware passthrough compose specification
+├── docker-run.sh                       # Single-command Raspberry Pi launcher
+├── docker-entrypoint.sh                # Peripheral auto-detection entrypoint
+│
 ├── systemd/
 │   └── roadguard.service               # Systemd daemon for boot startup
 │
@@ -205,6 +210,7 @@ roadguard-ai/
 └── docs/
     ├── HARDWARE.md                     # Hardware bill of materials
     ├── INSTALLATION.md                 # Raspberry Pi OS 64-bit setup
+    ├── DOCKER_GUIDE.md                 # Raspberry Pi 5 Docker deployment guide
     ├── CAR_INSTALLATION.md             # 2024 Toyota RAV4 XSE in-cabin guide
     ├── COLORADO_SETUP.md               # Mountain pass preparation
     ├── MODEL_SETUP.md                  # ONNX export, quantization, benchmarks
@@ -218,7 +224,28 @@ roadguard-ai/
 
 ## 6. Installation & Quick Start
 
-### 6.1 Automated One-Line Setup
+### 6.1 Method 1: Instant Docker Launch on Raspberry Pi 5 (Recommended)
+Zero dependency conflicts, automatic hardware device detection (`/dev/video0`, `/dev/ttyUSB0`, `/dev/snd`), and auto-restart on vehicle ignition:
+
+```bash
+# 1. Ensure Docker is installed on your Raspberry Pi OS 64-bit
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER && newgrp docker
+
+# 2. Clone and start RoadGuard AI with one command
+cd roadguard-ai
+chmod +x docker-run.sh
+./docker-run.sh
+
+# Or start via standard Docker Compose:
+docker compose up -d
+
+# To test on your desk without camera or GPS (Colorado pass simulation):
+./docker-run.sh --demo
+```
+*For detailed pass-through guides and systemd boot autostart, see [`docs/DOCKER_GUIDE.md`](docs/DOCKER_GUIDE.md).*
+
+### 6.2 Method 2: Bare-Metal Installation
 ```bash
 git clone https://github.com/roadguard/roadguard-ai.git
 cd roadguard-ai
@@ -226,7 +253,7 @@ chmod +x install.sh run.sh
 ./install.sh
 ```
 
-### 6.2 CLI Operational Modes
+### 6.3 CLI Operational Modes
 ```bash
 # Live camera execution
 roadguard
