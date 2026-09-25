@@ -277,6 +277,13 @@ roadguard --colorado-trip
 roadguard --calibrate-camera
 ```
 
+### 6.4 iPad Cockpit Companion & Sensor Offload Engine
+Mount your iPad (Air / Pro / Mini) on your RAV4 console rail or dash to serve as a high-visibility wireless HUD:
+- **Offloaded Sensors (10Hz)**: iPad streams high-accuracy GPS (CoreLocation), 3-axis accelerometer (G-forces), and gyroscope inclinometer (mountain pass road grade %) to the Pi 5 over WebSocket (`/ws/ipad`).
+- **Zero-Install Safari PWA**: Connect iPad to Pi 5 Wi-Fi, open `http://192.168.4.1:8080`, and tap **"Add to Home Screen"**.
+- **Native Capacitor App**: Full source code included in `/roadguard-ipad-app` ready for Xcode compilation.
+- **Audio Voice Synthesis**: Plays chime warnings and announces threat text (*"Wildlife ahead"*, *"Speed limit 45"*) through iPad speakers or RAV4 Bluetooth/AUX audio.
+
 ---
 
 ## 7. Author Information & Academic Citation

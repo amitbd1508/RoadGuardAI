@@ -133,6 +133,50 @@ CMD ["python3", "-m", "roadguard.main"]`
 # Auto-detects /dev/video0, /dev/ttyUSB0, /dev/snd and launches RoadGuard AI
 ./docker-run.sh        # Live vehicle mode
 ./docker-run.sh --demo # Bench-top Colorado simulator`
+  },
+  {
+    path: 'roadguard-ipad-app/src/services/sensorService.ts',
+    category: 'iPad App',
+    description: 'Offloads iPad CoreLocation GPS, 3-Axis Accelerometer, and Inclinometer to the Pi 5 at 10Hz.',
+    language: 'typescript',
+    snippet: `export class SensorService {
+  startStreaming() {
+    navigator.geolocation.watchPosition((pos) => {
+      this.payload.gps = {
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude,
+        altitude_ft: pos.coords.altitude * 3.28084,
+        speed_mph: pos.coords.speed * 2.23694
+      };
+    });
+    window.addEventListener('devicemotion', (e) => {
+      this.payload.imu.accel_x = e.accelerationIncludingGravity.x;
+      this.payload.imu.g_force = Math.sqrt(ax**2 + ay**2 + az**2) / 9.80665;
+    });
+    window.addEventListener('deviceorientation', (e) => {
+      this.payload.imu.pitch_deg = e.beta;  // Mountain grade incline
+      this.payload.imu.roll_deg = e.gamma;  // Banking
+    });
+  }
+}`
+  },
+  {
+    path: 'roadguard-ipad-app/capacitor.config.ts',
+    category: 'iPad App',
+    description: 'Capacitor configuration for native iOS / iPadOS deployment with background local notifications.',
+    language: 'typescript',
+    snippet: `import type { CapacitorConfig } from '@capacitor/cli';
+
+const config: CapacitorConfig = {
+  appId: 'ai.roadguard.ipad',
+  appName: 'RoadGuard iPad Hub',
+  webDir: 'dist',
+  ios: {
+    preferredContentMode: 'mobile',
+    backgroundColor: '#090d16'
+  }
+};
+export default config;`
   }
 ];
 

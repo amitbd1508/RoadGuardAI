@@ -12,7 +12,8 @@ import {
   Compass,
   Zap,
   Activity,
-  Boxes
+  Boxes,
+  Tablet
 } from 'lucide-react';
 import { TelemetryData, AlertEvent } from './types';
 import { CockpitHud } from './components/CockpitHud';
@@ -25,6 +26,7 @@ import { Rav4InstallGuide } from './components/Rav4InstallGuide';
 import { CodebaseExplorer } from './components/CodebaseExplorer';
 import { ResearchPaperViewer } from './components/ResearchPaperViewer';
 import { DockerDeployGuide } from './components/DockerDeployGuide';
+import { IpadCompanionHub } from './components/IpadCompanionHub';
 
 const INITIAL_TELEMETRY: TelemetryData = {
   speed_mph: 48.0,
@@ -216,6 +218,15 @@ export default function App() {
             Docker (Pi 5)
           </button>
           <button
+            onClick={() => setActiveTab('ipad')}
+            className={`transition-colors hover:text-white pb-0.5 flex items-center gap-1 ${
+              activeTab === 'ipad' ? 'text-sky-400 border-b-2 border-sky-400 font-semibold' : ''
+            }`}
+          >
+            <Tablet size={13} />
+            iPad Hub
+          </button>
+          <button
             onClick={() => setActiveTab('cabin')}
             className={`transition-colors hover:text-white pb-0.5 ${
               activeTab === 'cabin' ? 'text-sky-400 border-b-2 border-sky-400 font-semibold' : ''
@@ -257,6 +268,7 @@ export default function App() {
       <div className="md:hidden flex items-center gap-2 px-4 py-2 bg-slate-900 border-b border-slate-800 overflow-x-auto text-xs font-mono">
         {[
           { id: 'cockpit', label: 'HUD Cockpit' },
+          { id: 'ipad', label: 'iPad Hub' },
           { id: 'docker', label: 'Docker (Pi 5)' },
           { id: 'colorado', label: 'Passes' },
           { id: 'diagnostics', label: 'Diagnostics' },
@@ -349,7 +361,16 @@ export default function App() {
         {/* Tab 5: Docker Deployment Guide for Raspberry Pi 5 */}
         {activeTab === 'docker' && <DockerDeployGuide />}
 
-        {/* Tab 6: In-Cabin 2024 RAV4 Installation Blueprint */}
+        {/* Tab 6: iPad Companion & Sensor Offload Hub */}
+        {activeTab === 'ipad' && (
+          <IpadCompanionHub
+            telemetry={telemetry}
+            activeAlert={activeAlert}
+            onDispatchAlert={handleEmitAlert}
+          />
+        )}
+
+        {/* Tab 7: In-Cabin 2024 RAV4 Installation Blueprint */}
         {activeTab === 'cabin' && <Rav4InstallGuide />}
 
         {/* Tab 6: Complete Python Codebase Explorer */}

@@ -16,8 +16,9 @@ try:
 except ImportError:
     cv2 = None
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 from roadguard.config import DashboardConfig
@@ -213,6 +214,15 @@ class DashboardServer:
         self.status_provider = status_provider
         self.frame_provider = frame_provider
         self.app = FastAPI(title="RoadGuard AI Dashboard")
+        self.app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+        self.latest_ipad_sensor_data: dict = {}
+        self.last_sensor_update_time: float = 0.0
         self._setup_routes()
         self.active_websockets: list[WebSocket] = []
         self._thread: Optional[threading.Thread] = None
@@ -238,8 +248,84 @@ class DashboardServer:
                 "cpu_temp_c": status.cpu_temp_c,
                 "speed_mph": status.current_speed_mph,
                 "speed_limit_mph": status.current_speed_limit_mph,
-                "road_condition": status.current_road_condition.value
+                "road_condition": status.current_road_condition.value,
+                "ipad_sensor_active": (time.time() - self.last_sensor_update_time) < 5.0
             })
+
+        @self.app.post("/api/sensors/offload")
+        async def offload_sensors(request: Request):
+            try:
+                data = await request.json()
+                self.latest_ipad_sensor_data = data
+                self.last_sensor_update_time = time.time()
+                return JSONResponse(content={
+                    "status": "success",
+                    "received_at": self.last_sensor_update_time,
+                    "gps_received": "gps" in data,
+                    "imu_received": "imu" in data
+                })
+            except Exception as e:
+                return JSONResponse(status_code=400, content={"status": "error", "message": str(e)})
+
+        @self.app.get("/api/sensors/latest")
+        async def get_latest_sensors():
+            is_active = (time.time() - self.last_sensor_update_time) < 5.0
+            return JSONResponse(content={
+                "active": is_active,
+                "age_seconds": round(time.time() - self.last_sensor_update_time, 2) if self.last_sensor_update_time > 0 else None,
+                "data": self.latest_ipad_sensor_data
+            })
+
+        @self.app.websocket("/ws/ipad")
+        async def ipad_duplex_websocket(websocket: WebSocket):
+            """Bi-directional WebSocket for iPad: receives iPad GPS/IMU at 10Hz and streams threat alerts down."""
+            await websocket.accept()
+            self.active_websockets.append(websocket)
+
+            async def receive_loop():
+                try:
+                    while True:
+                        msg = await websocket.receive_text()
+                        payload = json.loads(msg)
+                        if payload.get("type") == "sensor_offload":
+                            self.latest_ipad_sensor_data = payload.get("data", {})
+                            self.last_sensor_update_time = time.time()
+                except Exception:
+                    pass
+
+            async def send_loop():
+                try:
+                    while True:
+                        status = self.status_provider()
+                        payload = {
+                            "type": "telemetry_update",
+                            "timestamp": time.time(),
+                            "camera_fps": status.camera_fps,
+                            "inference_fps": status.inference_fps,
+                            "speed_mph": status.current_speed_mph,
+                            "speed_limit_mph": status.current_speed_limit_mph,
+                            "road_condition": status.current_road_condition.value,
+                            "active_alerts": [
+                                {
+                                    "id": a.alert_id,
+                                    "message": a.message,
+                                    "short_audio": getattr(a, "short_audio_text", a.message),
+                                    "priority": a.priority.value,
+                                    "hazard_type": a.hazard_type,
+                                    "approx_distance_m": a.approx_distance_m
+                                } for a in status.active_alerts
+                            ]
+                        }
+                        await websocket.send_text(json.dumps(payload))
+                        await asyncio.sleep(0.1)  # 10 Hz refresh
+                except Exception:
+                    pass
+
+            try:
+                await asyncio.gather(receive_loop(), send_loop())
+            finally:
+                if websocket in self.active_websockets:
+                    self.active_websockets.remove(websocket)
 
         @self.app.websocket("/ws")
         async def websocket_endpoint(websocket: WebSocket):
