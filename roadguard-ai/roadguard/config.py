@@ -175,7 +175,7 @@ class EventRecordingConfig(BaseModel):
 
 class LicensePlateConfig(BaseModel):
     enabled: bool = False
-    display_live: bool = false_default := False
+    display_live: bool = False
     save_plate_text: bool = False
     save_plate_images: bool = False
 
